@@ -1,5 +1,5 @@
 use crate::Test;
-use io_uring::{cqueue, opcode, squeue, types, IoUring};
+use io_uring_ooo::{cqueue, opcode, squeue, types, IoUring};
 
 pub fn test_nop<S: squeue::EntryMarker, C: cqueue::EntryMarker>(
     ring: &mut IoUring<S, C>,

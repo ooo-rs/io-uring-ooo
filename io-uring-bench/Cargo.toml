@@ -7,10 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-io-uring = { path = ".." }
+io-uring-ooo = { path = ".." }
 iou = "0.3"
 uring-sys = "0.7"
-criterion = "0.4"
+criterion = "0.5"
 iai = "0.1"
 tempfile = "3"
 

@@ -4,7 +4,7 @@ const N: usize = 8;
 const ITER: usize = 8;
 
 fn bench_io_uring() {
-    use io_uring::{opcode, IoUring};
+    use io_uring_ooo::{opcode, IoUring};
 
     let mut io_uring = IoUring::new(N as _).unwrap();
 
@@ -27,7 +27,7 @@ fn bench_io_uring() {
 }
 
 fn bench_io_uring_batch() {
-    use io_uring::{opcode, IoUring};
+    use io_uring_ooo::{opcode, IoUring};
     use std::mem;
 
     let mut io_uring = IoUring::new(N as _).unwrap();

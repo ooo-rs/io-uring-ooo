@@ -1,8 +1,8 @@
 use crate::utils;
 use crate::Test;
-use io_uring::squeue::Flags;
-use io_uring::types::Fd;
-use io_uring::{cqueue, opcode, squeue, types, IoUring};
+use io_uring_ooo::squeue::Flags;
+use io_uring_ooo::types::Fd;
+use io_uring_ooo::{cqueue, opcode, squeue, types, IoUring};
 use once_cell::sync::OnceCell;
 use std::convert::TryInto;
 use std::net::{Shutdown, TcpListener, TcpStream};
@@ -160,18 +160,18 @@ pub fn test_tcp_zero_copy_send_recv<S: squeue::EntryMarker, C: cqueue::EntryMark
     assert_eq!(cqes.len(), 3);
     // Send completion is ordered w.r.t recv
     assert_eq!(cqes[0].user_data(), 0x01);
-    assert!(io_uring::cqueue::more(cqes[0].flags()));
+    assert!(io_uring_ooo::cqueue::more(cqes[0].flags()));
     assert_eq!(cqes[0].result(), text.len() as i32);
 
     // Notification is not ordered w.r.t recv
     match (cqes[1].user_data(), cqes[2].user_data()) {
         (0x01, 0x02) => {
-            assert!(!io_uring::cqueue::more(cqes[1].flags()));
+            assert!(!io_uring_ooo::cqueue::more(cqes[1].flags()));
             assert_eq!(cqes[2].result(), text.len() as i32);
             assert_eq!(&output[..cqes[2].result() as usize], text);
         }
         (0x02, 0x01) => {
-            assert!(!io_uring::cqueue::more(cqes[2].flags()));
+            assert!(!io_uring_ooo::cqueue::more(cqes[2].flags()));
             assert_eq!(cqes[1].result(), text.len() as i32);
             assert_eq!(&output[..cqes[1].result() as usize], text);
         }
@@ -243,18 +243,18 @@ pub fn test_tcp_zero_copy_send_fixed<S: squeue::EntryMarker, C: cqueue::EntryMar
     assert_eq!(cqes.len(), 3);
     // Send completion is ordered w.r.t recv
     assert_eq!(cqes[0].user_data(), 0x01);
-    assert!(io_uring::cqueue::more(cqes[0].flags()));
+    assert!(io_uring_ooo::cqueue::more(cqes[0].flags()));
     assert_eq!(cqes[0].result(), text.len() as i32);
 
     // Notification is not ordered w.r.t recv
     match (cqes[1].user_data(), cqes[2].user_data()) {
         (0x01, 0x02) => {
-            assert!(!io_uring::cqueue::more(cqes[1].flags()));
+            assert!(!io_uring_ooo::cqueue::more(cqes[1].flags()));
             assert_eq!(cqes[2].result(), text.len() as i32);
             assert_eq!(&output[..cqes[2].result() as usize], text);
         }
         (0x02, 0x01) => {
-            assert!(!io_uring::cqueue::more(cqes[2].flags()));
+            assert!(!io_uring_ooo::cqueue::more(cqes[2].flags()));
             assert_eq!(cqes[1].result(), text.len() as i32);
             assert_eq!(&output[..cqes[1].result() as usize], text);
         }
@@ -429,18 +429,18 @@ pub fn test_tcp_zero_copy_sendmsg_recvmsg<S: squeue::EntryMarker, C: cqueue::Ent
 
     // Send completion is ordered w.r.t recv
     assert_eq!(cqes[0].user_data(), 0x01);
-    assert!(io_uring::cqueue::more(cqes[0].flags()));
+    assert!(io_uring_ooo::cqueue::more(cqes[0].flags()));
     assert_eq!(cqes[0].result(), text.len() as i32);
 
     // Notification is not ordered w.r.t recv
     match (cqes[1].user_data(), cqes[2].user_data()) {
         (0x01, 0x02) => {
-            assert!(!io_uring::cqueue::more(cqes[1].flags()));
+            assert!(!io_uring_ooo::cqueue::more(cqes[1].flags()));
             assert_eq!(cqes[2].result(), text.len() as i32);
             assert_eq!(&buf2[..cqes[2].result() as usize], text);
         }
         (0x02, 0x01) => {
-            assert!(!io_uring::cqueue::more(cqes[2].flags()));
+            assert!(!io_uring_ooo::cqueue::more(cqes[2].flags()));
             assert_eq!(cqes[1].result(), text.len() as i32);
             assert_eq!(&buf2[..cqes[1].result() as usize], text);
         }
@@ -1310,7 +1310,7 @@ pub fn test_udp_recvmsg_multishot<S: squeue::EntryMarker, C: cqueue::EntryMarker
     const SIZE: usize = 512;
     let mut buffers = [[0u8; SIZE]; 3];
     for (index, buf) in buffers.iter_mut().enumerate() {
-        let provide_bufs_e = io_uring::opcode::ProvideBuffers::new(
+        let provide_bufs_e = io_uring_ooo::opcode::ProvideBuffers::new(
             buf.as_mut_ptr(),
             SIZE as i32,
             1,
@@ -1322,7 +1322,7 @@ pub fn test_udp_recvmsg_multishot<S: squeue::EntryMarker, C: cqueue::EntryMarker
         .into();
         unsafe { ring.submission().push(&provide_bufs_e)? };
         ring.submitter().submit_and_wait(1)?;
-        let cqes: Vec<io_uring::cqueue::Entry> = ring.completion().map(Into::into).collect();
+        let cqes: Vec<io_uring_ooo::cqueue::Entry> = ring.completion().map(Into::into).collect();
         assert_eq!(cqes.len(), 1);
         assert_eq!(cqes[0].user_data(), 11);
         assert_eq!(cqes[0].result(), 0);
@@ -1387,10 +1387,10 @@ pub fn test_udp_recvmsg_multishot<S: squeue::EntryMarker, C: cqueue::EntryMarker
     // Check the completion events for the two UDP messages, plus a trailing
     // CQE signaling that we ran out of buffers.
     ring.submitter().submit_and_wait(5).unwrap();
-    let cqes: Vec<io_uring::cqueue::Entry> = ring.completion().map(Into::into).collect();
+    let cqes: Vec<io_uring_ooo::cqueue::Entry> = ring.completion().map(Into::into).collect();
     assert_eq!(cqes.len(), 5);
     for cqe in cqes {
-        let is_more = io_uring::cqueue::more(cqe.flags());
+        let is_more = io_uring_ooo::cqueue::more(cqe.flags());
         match cqe.user_data() {
             // send notifications
             55 => {
@@ -1409,7 +1409,7 @@ pub fn test_udp_recvmsg_multishot<S: squeue::EntryMarker, C: cqueue::EntryMarker
             77 => {
                 assert!(cqe.result() > 0);
                 assert!(is_more);
-                let buf_id = io_uring::cqueue::buffer_select(cqe.flags()).unwrap();
+                let buf_id = io_uring_ooo::cqueue::buffer_select(cqe.flags()).unwrap();
                 let tmp_buf = &buffers[buf_id as usize];
                 let msg = types::RecvMsgOut::parse(tmp_buf, &msghdr).unwrap();
                 assert!([25, 15].contains(&msg.payload_data().len()));
@@ -1467,7 +1467,7 @@ pub fn test_udp_recvmsg_multishot_trunc<S: squeue::EntryMarker, C: cqueue::Entry
     ];
 
     for (index, buf) in buffers.iter_mut().enumerate() {
-        let provide_bufs_e = io_uring::opcode::ProvideBuffers::new(
+        let provide_bufs_e = io_uring_ooo::opcode::ProvideBuffers::new(
             (**buf).as_mut_ptr(),
             buf.len() as i32,
             1,
@@ -1479,7 +1479,7 @@ pub fn test_udp_recvmsg_multishot_trunc<S: squeue::EntryMarker, C: cqueue::Entry
         .into();
         unsafe { ring.submission().push(&provide_bufs_e)? };
         ring.submitter().submit_and_wait(1)?;
-        let cqes: Vec<io_uring::cqueue::Entry> = ring.completion().map(Into::into).collect();
+        let cqes: Vec<io_uring_ooo::cqueue::Entry> = ring.completion().map(Into::into).collect();
         assert_eq!(cqes.len(), 1);
         assert_eq!(cqes[0].user_data(), 11);
         assert_eq!(cqes[0].result(), 0);
@@ -1524,11 +1524,11 @@ pub fn test_udp_recvmsg_multishot_trunc<S: squeue::EntryMarker, C: cqueue::Entry
     ring.submitter().submit().unwrap();
 
     ring.submitter().submit_and_wait(4).unwrap();
-    let cqes: Vec<io_uring::cqueue::Entry> = ring.completion().map(Into::into).collect();
+    let cqes: Vec<io_uring_ooo::cqueue::Entry> = ring.completion().map(Into::into).collect();
     assert_eq!(cqes.len(), 4);
     let mut i = 0;
     for cqe in cqes {
-        let is_more = io_uring::cqueue::more(cqe.flags());
+        let is_more = io_uring_ooo::cqueue::more(cqe.flags());
         match cqe.user_data() {
             // send notifications
             55 => {
@@ -1539,7 +1539,7 @@ pub fn test_udp_recvmsg_multishot_trunc<S: squeue::EntryMarker, C: cqueue::Entry
             77 => {
                 assert!(cqe.result() > 0);
                 assert!(is_more);
-                let buf_id = io_uring::cqueue::buffer_select(cqe.flags()).unwrap();
+                let buf_id = io_uring_ooo::cqueue::buffer_select(cqe.flags()).unwrap();
                 let tmp_buf = &buffers[buf_id as usize];
                 let msg = types::RecvMsgOut::parse(tmp_buf, &msghdr);
 
@@ -1598,7 +1598,7 @@ pub fn test_udp_sendzc_with_dest<S: squeue::EntryMarker, C: cqueue::EntryMarker>
     const SIZE: usize = 512;
     let mut buffers = [[0u8; SIZE]; 2];
     for (index, buf) in buffers.iter_mut().enumerate() {
-        let provide_bufs_e = io_uring::opcode::ProvideBuffers::new(
+        let provide_bufs_e = io_uring_ooo::opcode::ProvideBuffers::new(
             buf.as_mut_ptr(),
             SIZE as i32,
             1,
@@ -1610,7 +1610,7 @@ pub fn test_udp_sendzc_with_dest<S: squeue::EntryMarker, C: cqueue::EntryMarker>
         .into();
         unsafe { ring.submission().push(&provide_bufs_e)? };
         ring.submitter().submit_and_wait(1)?;
-        let cqes: Vec<io_uring::cqueue::Entry> = ring.completion().map(Into::into).collect();
+        let cqes: Vec<io_uring_ooo::cqueue::Entry> = ring.completion().map(Into::into).collect();
         assert_eq!(cqes.len(), 1);
         assert_eq!(cqes[0].user_data(), 11);
         assert_eq!(cqes[0].result(), 0);

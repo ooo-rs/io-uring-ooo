@@ -281,11 +281,11 @@ impl<'a> Submitter<'a> {
     // which CI runs) only has Linux 5.4.
     /// ```no_run
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let io_uring = io_uring::IoUring::new(1)?;
-    /// let mut probe = io_uring::Probe::new();
+    /// let io_uring = io_uring_ooo::IoUring::new(1)?;
+    /// let mut probe = io_uring_ooo::Probe::new();
     /// io_uring.submitter().register_probe(&mut probe)?;
     ///
-    /// if probe.is_supported(io_uring::opcode::Read::CODE) {
+    /// if probe.is_supported(io_uring_ooo::opcode::Read::CODE) {
     ///     println!("Reading is supported!");
     /// }
     /// # Ok(())
@@ -533,13 +533,12 @@ impl<'a> Submitter<'a> {
         let flags = builder.flags.bits();
         let fd = builder.to_fd();
 
-        let arg = {
-            let mut arg = sys::io_uring_sync_cancel_reg::default();
-            arg.addr = user_data;
-            arg.fd = fd;
-            arg.flags = flags;
-            arg.timeout = timespec;
-            arg
+        let arg = sys::io_uring_sync_cancel_reg {
+            addr: user_data,
+            fd,
+            flags,
+            timeout: timespec,
+            ..Default::default()
         };
         execute(
             self.fd.as_raw_fd(),

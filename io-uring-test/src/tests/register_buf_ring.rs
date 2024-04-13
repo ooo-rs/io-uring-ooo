@@ -2,9 +2,9 @@
 // The entry point in this file can be found by searching for 'pub'.
 
 use crate::Test;
-use io_uring::types;
-use io_uring::types::BufRingEntry;
-use io_uring::{cqueue, opcode, squeue, IoUring};
+use io_uring_ooo::types;
+use io_uring_ooo::types::BufRingEntry;
+use io_uring_ooo::{cqueue, opcode, squeue, IoUring};
 
 use std::cell::Cell;
 use std::fmt;
@@ -261,7 +261,7 @@ impl InnerBufRing {
         // the same BufRing but wrapped in Rc<_> so the wrapped buf_ring can be passed to the
         // outgoing GBuf.
 
-        let bid = io_uring::cqueue::buffer_select(flags).unwrap();
+        let bid = io_uring_ooo::cqueue::buffer_select(flags).unwrap();
 
         let len = res as usize;
 

@@ -2,7 +2,7 @@
 mod utils;
 mod tests;
 
-use io_uring::{cqueue, squeue, IoUring, Probe};
+use io_uring_ooo::{cqueue, squeue, IoUring, Probe};
 use std::cell::Cell;
 use std::ffi::CStr;
 use std::mem;
@@ -58,10 +58,10 @@ fn test<S: squeue::EntryMarker, C: cqueue::EntryMarker>(
     println!(
         "ring type: IoUring<{}, {}>",
         std::any::type_name::<S>()
-            .strip_prefix("io_uring::")
+            .strip_prefix("io_uring_ooo::")
             .unwrap(),
         std::any::type_name::<C>()
-            .strip_prefix("io_uring::")
+            .strip_prefix("io_uring_ooo::")
             .unwrap(),
     );
     println!("params: {:#?}", ring.params());

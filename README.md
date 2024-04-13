@@ -20,7 +20,7 @@ Next we can start using `io-uring` crate.
 The following is quick introduction using `Read` for file.
 
 ```rust
-use io_uring::{opcode, types, IoUring};
+use io_uring_ooo::{opcode, types, IoUring};
 use std::os::unix::io::AsRawFd;
 use std::{fs, io};
 

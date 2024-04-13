@@ -88,6 +88,7 @@ bitflags! {
     /// The default behavior when the timeout expires is to return a CQE with -libc::ETIME in
     /// the res field. To change this behavior to have zero returned, include
     /// [`types::TimeoutFlags::ETIME_SUCCESS`].
+    #[derive(Debug, Eq, PartialEq, PartialOrd, Ord)]
     pub struct TimeoutFlags: u32 {
         const ABS = sys::IORING_TIMEOUT_ABS;
 
@@ -103,6 +104,7 @@ bitflags! {
 
 bitflags! {
     /// Options for [`Fsync`](super::Fsync).
+    #[derive(Debug, Eq, PartialEq, PartialOrd, Ord)]
     pub struct FsyncFlags: u32 {
         const DATASYNC = sys::IORING_FSYNC_DATASYNC;
     }
@@ -111,6 +113,7 @@ bitflags! {
 bitflags! {
     /// Options for [`AsyncCancel`](super::AsyncCancel) and
     /// [`Submitter::register_sync_cancel`](super::Submitter::register_sync_cancel).
+    #[derive(Debug, Eq, PartialEq, PartialOrd, Ord)]
     pub(crate) struct AsyncCancelFlags: u32 {
         /// Cancel all requests that match the given criteria, rather
         /// than just canceling the first one found.
@@ -209,7 +212,7 @@ impl From<std::time::Duration> for Timespec {
 /// Note that arguments that exceed their lifetime will fail to compile.
 ///
 /// ```compile_fail
-/// use io_uring::types::{ SubmitArgs, Timespec };
+/// use io_uring_ooo::types::{ SubmitArgs, Timespec };
 ///
 /// let sigmask: libc::sigset_t = unsafe { std::mem::zeroed() };
 ///
@@ -395,7 +398,7 @@ impl<'buf> RecvMsgOut<'buf> {
     #[allow(clippy::result_unit_err)]
     pub fn parse(buffer: &'buf [u8], msghdr: &libc::msghdr) -> Result<Self, ()> {
         let msghdr_name_len = usize::try_from(msghdr.msg_namelen).unwrap();
-        let msghdr_control_len = usize::try_from(msghdr.msg_controllen).unwrap();
+        let msghdr_control_len = msghdr.msg_controllen;
 
         if Self::DATA_START
             .checked_add(msghdr_name_len)
@@ -532,7 +535,7 @@ impl<'buf> RecvMsgOut<'buf> {
 /// ### Examples
 ///
 /// ```
-/// use io_uring::types::{CancelBuilder, Fd, Fixed};
+/// use io_uring_ooo::types::{CancelBuilder, Fd, Fixed};
 ///
 /// // Match all in-flight requests.
 /// CancelBuilder::any();
